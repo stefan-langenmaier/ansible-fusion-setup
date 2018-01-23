@@ -1,0 +1,29 @@
+---
+# This playbook configures an Ubuntu to the best practices for Fusion installation
+
+- name: "Configure best practices for a Fusion installation on Ubuntu"
+  hosts: all
+  connection: local
+  become: true
+
+  tasks:
+  - name: "Bring system up to date"
+    apt:
+      update_cache: yes
+      upgrade: dist
+
+  - name: "Verify JDK8"
+    apt:
+      name: "openjdk-8-jdk"
+
+  - name: "Configure fusion group"
+    group:
+      name: fusion
+      state: present
+
+  - name: "Configure fusion user"
+    user:
+      name: fusion
+      state: present
+      group: fusion
+      comment: "Custom account for the fusion service"

@@ -1,0 +1,33 @@
+---
+# This playbook installs Fusion on a current Ubuntu system
+
+- name: "Install Fusion on Ubuntu"
+  hosts: all
+  vars:
+    fusion_version: "3.1.3"
+  connection: local
+
+  tasks:
+  - name: "Download fusion installation package"
+    get_url:
+      url: "https://download.lucidworks.com/fusion-{{ fusion_version }}/fusion-{{ fusion_version }}.tar.gz"
+      dest: "/tmp/fusion-{{ fusion_version }}.tar.gz"
+
+  - name: "Verify checksum"
+    shell: "cd /tmp && sha256sum -c fusion-3.1.3.tar.gz.sha256"
+
+  - name: "Setup lucidworks main folder"
+    file:
+      path: /opt/lucidworks
+      state: directory
+#      mode: 0755
+      owner: fusion
+      group: fusion
+    become: true
+
+  - name: "Extract Fusion"
+    unarchive:
+      src: "/tmp/fusion-{{ fusion_version }}.tar.gz"
+      dest: "/opt/lucidworks"
+    become: true
+    become_user: fusion
