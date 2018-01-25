@@ -1,1 +1,7 @@
 These are simple ansible scripts to prepare a current Ubuntu hosts for a Lucidworks Fusion installation.
+
+References
+----------
+
+* https://doc.lucidworks.com/fusion/3.1/Installation_and_Configuration/Installing-Lucidworks-Fusion.html
+
