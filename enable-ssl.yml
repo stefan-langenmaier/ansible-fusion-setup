@@ -1,0 +1,94 @@
+---
+# This playbook enables SSL for Fusion on a current Ubuntu system
+
+- name: "Enable SSL for Fusion on Ubuntu"
+  hosts: all
+  vars:
+    fusion_version: "3.1.5"
+    fusion_home: "/opt/lucidworks/fusion/{{ fusion_version }}"
+    fusion_user: "fusion"
+    fusion_group: "fusion"
+  connection: local
+
+  tasks:
+  - name: "Remove jetty keystore if exists"
+    file:
+      path: "{{ fusion_home }}/apps/jetty/ui/etc/keystore"
+      state: absent
+    become: true
+
+  - name: "Add file to jetty keystore"
+    expect:
+      command: "keytool -importkeystore -srckeystore files/keystore.pkcs12 -srcstoretype PKCS12 -destkeystore {{ fusion_home }}/apps/jetty/ui/etc/keystore"
+      responses:
+        password: "fusion"
+    become: true
+    become_user: fusion        
+
+  - name: "Add https to jetty"
+    shell: "java -jar {{ fusion_home }}/apps/jetty/home/start.jar --add-to-start=https"
+    args:
+      chdir: "{{ fusion_home }}/apps/jetty/ui"
+    become: true
+    become_user: fusion        
+
+  - name: "Get hashed keystore password"
+    shell: "java -cp ./apps/libs/jetty-util-9.3.8.v20160314.jar org.eclipse.jetty.util.security.Password fusion 2>&1 >/dev/null | grep OBF"
+    args:
+      chdir: "{{ fusion_home }}"
+    register: hashed_keystore_pw
+    become: true
+    become_user: fusion        
+
+  - debug:
+     msg: "{{ hashed_keystore_pw }}"
+
+  - name: "Set start.ini password configuration"
+    lineinfile:
+      dest: "{{ fusion_home }}/apps/jetty/ui/start.ini"
+      regexp: "^# {{ item }}="
+      line: "{{ item }}={{ hashed_keystore_pw.stdout }}"
+    with_items:
+      - "jetty.sslContext.keyStorePassword"
+    become: true
+    become_user: fusion
+
+  - name: "Set start.ini password configuration"
+    lineinfile:
+      dest: "{{ fusion_home }}/apps/jetty/ui/start.ini"
+      regexp: "^# {{ item }}="
+      line: "{{ item }}={{ hashed_keystore_pw.stdout }}"
+    with_items:
+      - "jetty.sslContext.keyManagerPassword"
+    become: true
+    become_user: fusion
+
+  - name: "Set start.ini password configuration"
+    lineinfile:
+      dest: "{{ fusion_home }}/apps/jetty/ui/start.ini"
+      regexp: "^# {{ item }}="
+      line: "{{ item }}={{ hashed_keystore_pw.stdout }}"
+    with_items:
+      - "jetty.sslContext.trustStorePassword"
+    become: true
+    become_user: fusion
+
+  - name: "Set start.ini port configuration"
+    lineinfile:
+      dest: "{{ fusion_home }}/apps/jetty/ui/start.ini"
+      regexp: "^# {{ item }}"
+      line: "{{ item }}=8443"
+    with_items:
+      - "jetty.ssl.port"
+    become: true
+    become_user: fusion
+
+# NOT NEEDED FOR FUSION INTERFACE
+#  - name: "Set start.ini password configuration"
+##    shell: "./zkcli.sh -zkhost localhost:9983 -cmd put /lwfusion/{{ fusion_version }}/solr/clusterprops.json \'{\"legacyCloud\":\"false\", \"urlScheme\":\"https\"}\'"
+#    shell: "./zkcli.sh -zkhost localhost:9983 -cmd put /clusterprops.json \'{\"urlScheme\":\"https\"}\'"
+#    args:
+#      chdir: "{{ fusion_home }}/apps/solr-dist/server/scripts/cloud-scripts/"
+#    become: true
+#    become_user: fusion 
+
