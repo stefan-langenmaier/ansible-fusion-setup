@@ -16,6 +16,17 @@
     apt:
       name: "openjdk-8-jdk"
 
+  - name: "Verify Firefox deps"
+    apt:
+      name:
+        - "libgtk-3-0"
+        - "libdbus-glib-1-2"
+        - "xvfb"
+
+  - name: "Verify Pexpect"
+    apt:
+      name: "python-pexpect"
+
   - name: "Configure fusion group"
     group:
       name: fusion
