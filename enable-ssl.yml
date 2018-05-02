@@ -8,6 +8,7 @@
     fusion_home: "/opt/lucidworks/fusion/{{ fusion_version }}"
     fusion_user: "fusion"
     fusion_group: "fusion"
+    cert_password: "fusion"
   connection: local
 
   tasks:
@@ -21,7 +22,7 @@
     expect:
       command: "keytool -importkeystore -srckeystore files/keystore.pkcs12 -srcstoretype PKCS12 -destkeystore {{ fusion_home }}/apps/jetty/ui/etc/keystore"
       responses:
-        password: "fusion"
+        password: "{{ cert_password }}"
     become: true
     become_user: fusion        
 
@@ -33,7 +34,7 @@
     become_user: fusion        
 
   - name: "Get hashed keystore password"
-    shell: "java -cp ./apps/libs/jetty-util-9.3.8.v20160314.jar org.eclipse.jetty.util.security.Password fusion 2>&1 >/dev/null | grep OBF"
+    shell: "java -cp ./apps/libs/jetty-util-9.3.8.v20160314.jar org.eclipse.jetty.util.security.Password '{{ cert_password }}' 2>&1 >/dev/null | grep OBF"
     args:
       chdir: "{{ fusion_home }}"
     register: hashed_keystore_pw
